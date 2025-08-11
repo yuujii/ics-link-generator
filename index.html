@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICS Link Generator</title>
+    <style>
+        :root {
+            --background-color: #f0f2f5;
+            --surface-color: #ffffff;
+            --primary-text-color: #1c1e21;
+            --secondary-text-color: #606770;
+            --accent-gradient: linear-gradient(45deg, #007BFF, #00C6FF);
+            --accent-gradient-hover: linear-gradient(45deg, #0069d9, #00b5e6);
+            --border-color: #dddfe2;
+            --input-bg-color: #f5f6f7;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--primary-text-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--surface-color);
+            padding: 25px 30px;
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .header p {
+            margin-top: 8px;
+            color: var(--secondary-text-color);
+            font-size: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--secondary-text-color);
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+            transition: color 0.3s;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 12px 12px 45px;
+            background-color: var(--input-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--primary-text-color);
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #007BFF;
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+        }
+        
+        .form-control:focus + i {
+            color: #007BFF;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent-gradient);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background: var(--accent-gradient-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+        }
+        
+        #result {
+            margin-top: 20px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        #result.show {
+            display: block;
+            opacity: 1;
+        }
+
+        #result p {
+            margin: 0 0 8px 0;
+            font-weight: 600;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .share-link-wrapper {
+            display: flex;
+        }
+
+        #share-link {
+            flex-grow: 1;
+            padding: 10px;
+            background-color: var(--input-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px 0 0 8px;
+            color: var(--secondary-text-color);
+            font-family: 'Courier New', Courier, monospace;
+            border-right: none;
+            font-size: 12px;
+        }
+        
+        #copy-button {
+            padding: 10px 15px;
+            border: none;
+            background: #e9ecef;
+            color: var(--secondary-text-color);
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 15px;
+        }
+        
+        #copy-button:hover {
+            background-color: #dee2e6;
+        }
+
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 8px;
+            display: none;
+        }
+    </style>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>予定共有リンク作成</h1>
+            <p>イベント情報を入力して共有</p>
+        </div>
+
+        <form id="event-form">
+            <div class="form-group">
+                <label for="title">予定名</label>
+                <div class="input-wrapper">
+                    <input type="text" id="title" class="form-control" placeholder="例：新プロジェクトのキックオフ" required>
+                    <i class="fa-solid fa-pencil"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="start-date">開始日時</label>
+                <div class="input-wrapper">
+                    <input type="datetime-local" id="start-date" class="form-control" required>
+                    <i class="fa-solid fa-calendar-days"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="end-date">終了日時</label>
+                <div class="input-wrapper">
+                    <input type="datetime-local" id="end-date" class="form-control" required>
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="location">場所またはURL</label>
+                <div class="input-wrapper">
+                    <input type="text" id="location" class="form-control" placeholder="例：第3会議室 or Zoomリンク">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="notification">事前通知</label>
+                <div class="input-wrapper">
+                    <select id="notification" class="form-control" style="padding-left: 45px;">
+                        <option value="">通知なし</option>
+                        <option value="5">5分前</option>
+                        <option value="15" selected>15分前</option>
+                        <option value="30">30分前</option>
+                        <option value="60">1時間前</option>
+                        <option value="90">90分前</option>
+                    </select>
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">共有リンクを生成</button>
+        </form>
+        
+        <div id="result">
+            <p>リンクが生成されました</p>
+            <div class="share-link-wrapper">
+                <input type="text" id="share-link" readonly>
+                <button id="copy-button" title="コピーする"><i class="fa-solid fa-copy"></i></button>
+            </div>
+            <div id="copy-success" class="success-message">リンクをコピーしました！</div>
+        </div>
+    </div>
+
+    <script>
+        // Cookie utility functions
+        function setCookie(name, value, days = 30) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        // Format date for datetime-local input
+        function formatDateTimeLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        // Format date for ICS format
+        function formatDateForICS(date) {
+            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        }
+
+        // Generate ICS content
+        function generateICS(title, startDate, endDate, location, notification) {
+            const now = new Date();
+            const uid = `${now.getTime()}@ics-link-generator.com`;
+            const dtstamp = formatDateForICS(now);
+            const dtstart = formatDateForICS(startDate);
+            const dtend = formatDateForICS(endDate);
+
+            let icsContent = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//ICS Link Generator//EN',
+                'BEGIN:VEVENT',
+                `UID:${uid}`,
+                `DTSTAMP:${dtstamp}`,
+                `DTSTART:${dtstart}`,
+                `DTEND:${dtend}`,
+                `SUMMARY:${title}`,
+            ];
+
+            if (location) {
+                icsContent.push(`LOCATION:${location}`);
+            }
+
+            if (notification) {
+                icsContent.push('BEGIN:VALARM');
+                icsContent.push('ACTION:DISPLAY');
+                icsContent.push(`DESCRIPTION:${title}`);
+                icsContent.push(`TRIGGER:-PT${notification}M`);
+                icsContent.push('END:VALARM');
+            }
+
+            icsContent.push('END:VEVENT');
+            icsContent.push('END:VCALENDAR');
+
+            return icsContent.join('\r\n');
+        }
+
+        // Download ICS file
+        function downloadICS(content, filename) {
+            const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialize page
+        function initializePage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Check if this is an ICS download request
+            if (urlParams.has('title')) {
+                handleICSDownload(urlParams);
+                return;
+            }
+
+            // Set default start date to current time
+            const now = new Date();
+            document.getElementById('start-date').value = formatDateTimeLocal(now);
+
+            // Set default end date to 1 hour later
+            const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+            document.getElementById('end-date').value = formatDateTimeLocal(oneHourLater);
+
+            // Restore notification preference from cookie
+            const savedNotification = getCookie('notification-preference');
+            if (savedNotification) {
+                document.getElementById('notification').value = savedNotification;
+            }
+
+            // Add event listeners
+            document.getElementById('start-date').addEventListener('change', function() {
+                const startDate = new Date(this.value);
+                if (startDate) {
+                    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+                    document.getElementById('end-date').value = formatDateTimeLocal(endDate);
+                }
+            });
+
+            document.getElementById('notification').addEventListener('change', function() {
+                setCookie('notification-preference', this.value);
+            });
+
+            document.getElementById('event-form').addEventListener('submit', handleFormSubmit);
+            document.getElementById('copy-button').addEventListener('click', copyToClipboard);
+        }
+
+        // Handle ICS download
+        function handleICSDownload(urlParams) {
+            const title = urlParams.get('title');
+            const startDate = new Date(urlParams.get('start'));
+            const endDate = new Date(urlParams.get('end'));
+            const location = urlParams.get('location') || '';
+            const notification = urlParams.get('notification') || '';
+
+            const icsContent = generateICS(title, startDate, endDate, location, notification);
+            const filename = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
+            
+            downloadICS(icsContent, filename);
+
+            // Show download message
+            document.body.innerHTML = `
+                <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                    <div style="text-align: center; padding: 40px; background: white; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.08);">
+                        <h2 style="color: #1c1e21; margin-bottom: 16px;">📅 カレンダーファイルをダウンロード中...</h2>
+                        <p style="color: #606770; margin-bottom: 20px;">「${title}」の予定ファイルがダウンロードされました。</p>
+                        <p style="color: #606770; font-size: 14px;">ファイルが自動でダウンロードされない場合は、ブラウザの設定をご確認ください。</p>
+                        <button onclick="window.close()" style="margin-top: 20px; padding: 10px 20px; background: linear-gradient(45deg, #007BFF, #00C6FF); border: none; border-radius: 8px; color: white; cursor: pointer;">閉じる</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Handle form submission
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const location = document.getElementById('location').value;
+            const notification = document.getElementById('notification').value;
+
+            // Create URL with parameters
+            const params = new URLSearchParams({
+                title: title,
+                start: startDate,
+                end: endDate,
+            });
+
+            if (location) params.append('location', location);
+            if (notification) params.append('notification', notification);
+
+            const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+
+            // Show result
+            document.getElementById('share-link').value = shareUrl;
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            setTimeout(() => {
+                resultDiv.classList.add('show');
+            }, 10);
+        }
+
+        // Copy to clipboard
+        function copyToClipboard() {
+            const shareLink = document.getElementById('share-link');
+            shareLink.select();
+            shareLink.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                const successMessage = document.getElementById('copy-success');
+                successMessage.style.display = 'block';
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 2000);
+            } catch (err) {
+                console.error('コピーに失敗しました:', err);
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializePage);
+    </script>
+
+</body>
+</html>
+
